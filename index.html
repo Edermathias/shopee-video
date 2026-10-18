@@ -211,7 +211,7 @@ async function ttsGemini(text, key, voice) {
   for (const model of await gemTts(key)) {
     for (let tent = 0; tent < 4; tent++) {
       const r = await fetch(GEM + model + ':generateContent', {method: 'POST', headers: {'Content-Type': 'application/json', 'x-goog-api-key': key},
-        body: JSON.stringify({contents: [{parts: [{text: 'Say in an energetic, natural Brazilian Portuguese sales tone, with a clear Brazilian accent: ' + text}]}],
+        body: JSON.stringify({contents: [{parts: [{text: text}]}],
           generationConfig: {responseModalities: ['AUDIO'], speechConfig: {voiceConfig: {prebuiltVoiceConfig: {voiceName: voice}}}}})});
       const j = await r.json().catch(() => ({}));
       if (r.status === 429) { for (let s = 20; s > 0; s--) { setSt(`⏳ Limite grátis da voz atingido. Aguardando ${s}s e tentando de novo…`); await sleep(1000); } continue; }
