@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Shopee Vídeo Pro</title>
+<style>
+:root{color-scheme:dark}
+*{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:#120d0b;color:#f6ebe6;padding:calc(env(safe-area-inset-top,0px) + 8px) 14px calc(40px + env(safe-area-inset-bottom,0px))}
+main{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-size:21px;margin:14px 0 0}h1 span{color:#ee4d2d}h2{font-size:13px;margin:0;color:#ffb199}
+.card{background:#1d1411;border:1px solid #3a2b26;border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:9px}
+.inp,select,textarea{background:#0e0a09;border:1px solid #3a2b26;color:#f6ebe6;border-radius:12px;padding:10px;width:100%;font-size:14px}
+textarea{min-height:64px}
+.btn{background:linear-gradient(135deg,#ee4d2d,#ff7a45);border:0;color:#fff;border-radius:14px;font-weight:800;font-size:15px;padding:14px;width:100%}
+.btn:disabled{opacity:.5}
+.g{background:#2e201b;border:0;color:#ffd3c5;border-radius:12px;font-weight:700;padding:11px;width:100%;font-size:13px;display:block;text-align:center;text-decoration:none}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{font-size:11px;font-weight:700;color:#ffb199;display:block;margin-bottom:4px}
+.drop{border:2px dashed #5a4038;border-radius:14px;padding:16px;text-align:center;font-size:13px;font-weight:700;color:#ffb199;display:block}
+.th{display:flex;gap:8px;overflow-x:auto}.th>div{position:relative;flex:none}
+.th img,.th video{width:64px;height:64px;object-fit:cover;border-radius:10px;display:block}
+.th b{position:absolute;top:2px;left:4px;font-size:11px;background:#000a;border-radius:6px;padding:0 4px}
+.sc{border-left:3px solid #ee4d2d;padding-left:9px;display:flex;flex-direction:column;gap:6px}
+.hidden{display:none!important}.note{font-size:11px;color:#a8958d;margin:0;line-height:1.4}
+.note a{color:#ffb199}
+#st{font-size:12px;font-weight:700;text-align:center;color:#ffb199;margin:0;white-space:pre-line}
+#out{width:100%;max-height:440px;border-radius:12px;background:#000}
+</style>
+</head>
+<body>
+<main>
+<header><h1>🛍️ Shopee <span>Vídeo Pro</span></h1>
+<p class="note">Fotos e vídeos do produto → roteiro da IA, voz, música e selo de preço, num vídeo vertical pronto.</p></header>
+
+<div class="card">
+  <h2>Chaves de IA (grátis)</h2>
+  <input id="gkey" type="password" class="inp" placeholder="Chave do roteiro: Gemini (AIza…) ou Groq (gsk_…)">
+  <input id="okey" type="password" class="inp" placeholder="Chave da voz (opcional): Gemini (AIza…) ou OpenAI (sk-…)">
+  <p class="note">✅ Mais simples: uma única chave <b>Gemini</b> grátis serve para roteiro e voz. Crie em <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>. A Groq (<a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com</a>) é grátis só para o roteiro. Sem chave de voz, use sua própria narração ou deixe sem voz.</p>
+</div>
+
+<div class="card">
+  <h2>1. Fotos e vídeos do produto (até 8, na ordem das cenas)</h2>
+  <label class="drop">📸 Toque para escolher fotos e vídeos<input id="files" type="file" accept="image/*,video/*" multiple class="hidden"></label>
+  <div class="th" id="th"></div>
+</div>
+
+<div class="card">
+  <h2>2. Produto e oferta</h2>
+  <input id="nome" class="inp" placeholder="Nome do produto">
+  <textarea id="det" class="inp" placeholder="Detalhes reais: benefícios, medidas, diferenciais (só o que é verdade)"></textarea>
+  <div class="row"><div><label>Preço (R$)</label><input id="preco" class="inp" placeholder="39,90" inputmode="decimal"></div>
+  <div><label>Preço antigo (opcional)</label><input id="antigo" class="inp" placeholder="59,90" inputmode="decimal"></div></div>
+  <input id="oferta" class="inp" placeholder="Selo da oferta (ex.: FRETE GRÁTIS, CUPOM 10%)">
+  <select id="tom"><option>Demonstração (usando o produto)</option><option>Unboxing (abrindo e mostrando)</option><option>Oferta relâmpago (urgência honesta)</option></select>
+  <button id="gr" class="btn">✨ Gerar roteiro com IA</button>
+</div>
+
+<div class="card hidden" id="ed">
+  <h2>3. Revise o roteiro (pode editar)</h2>
+  <div><label>Gancho (primeiros 3 segundos)</label><input id="hk" class="inp"></div>
+  <div id="scs" style="display:flex;flex-direction:column;gap:12px"></div>
+  <div><label>Chamada final (CTA)</label><input id="ct" class="inp"></div>
+  <div><label>Texto da descrição + hashtags</label><textarea id="post" class="inp"></textarea></div>
+  <button id="cp" class="g">📋 Copiar descrição</button>
+</div>
+
+<div class="card hidden" id="vm">
+  <h2>4. Voz, música e vídeo</h2>
+  <div class="row"><div><label>Narração</label><select id="vz"><option value="ia">Voz IA</option><option value="arq">Minha narração (áudio)</option><option value="sem">Sem voz</option></select></div>
+  <div><label>Voz</label><select id="vc"><option value="Kore">Feminina firme</option><option value="Aoede">Feminina leve</option><option value="Puck">Masculina animada</option><option value="Charon">Masculina grave</option><option value="Fenrir">Masculina enérgica</option></select></div></div>
+  <div id="narw" class="hidden"><label>Arquivo da narração (gravador do celular)</label><input id="nar" type="file" accept="audio/*" class="inp"></div>
+  <div><label>Música de fundo (criada no app, sem direitos autorais)</label><select id="mu"><option value="animada">Animada</option><option value="intensa">Intensa</option><option value="calma">Calma</option><option value="arq">Minha música (enviar arquivo)</option><option value="nenhuma">Sem música</option></select></div>
+  <div id="muw" class="hidden"><label>Arquivo da música (MP3, M4A…)</label><input id="muf" type="file" accept="audio/*" class="inp"><label style="margin-top:8px">Começar a música em (segundos)</label><input id="mst" type="number" min="0" value="0" class="inp" inputmode="numeric"><p class="note">O app corta a música no tamanho do vídeo, com fade no final. Use só músicas que você tem direito de usar.</p></div>
+  <button id="mk" class="btn">🎬 GERAR VÍDEO</button>
+  <p id="st"></p>
+  <p class="note">Mantenha a tela ligada durante a gravação. O vídeo é gravado em tempo real. Na voz grátis do Gemini, o limite é de poucas falas por minuto: o app espera e tenta de novo sozinho.</p>
+</div>
+
+<div class="card hidden" id="res">
+  <video id="out" controls playsinline></video>
+  <a id="dl" class="g">⬇️ Salvar vídeo</a>
+  <button id="sh" class="g">📤 Compartilhar</button>
+</div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const GROQ = 'https://api.groq.com/openai/v1/chat/completions', OAI = 'https://api.openai.com/v1/chat/completions';
+const GEM = 'https://generativelanguage.googleapis.com/v1beta/models/';
+let media = [], S = [], post = {gancho: '', cta: '', texto: ''}, F = {}, AC = null;
+const setSt = t => $('st').textContent = t;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+const clean = v => v.replace(/[^\x20-\x7E]/g, '').trim();
+
+['gkey', 'okey'].forEach(id => {
+  try { $(id).value = localStorage.getItem('shp_' + id) || ''; } catch (e) {}
+  $(id).addEventListener('input', () => { try { localStorage.setItem('shp_' + id, $(id).value.trim()); } catch (e) {} });
+});
+$('vz').onchange = () => $('narw').classList.toggle('hidden', $('vz').value !== 'arq');
+$('mu').onchange = () => $('muw').classList.toggle('hidden', $('mu').value !== 'arq');
+
+$('files').onchange = e => {
+  media = [...e.target.files].slice(0, 8).map(f => {
+    const url = URL.createObjectURL(f), vid = f.type.startsWith('video');
+    let el;
+    if (vid) { el = document.createElement('video'); el.muted = true; el.loop = true; el.playsInline = true; el.preload = 'auto'; el.src = url; }
+    else { el = new Image(); el.src = url; }
+    return {t: vid ? 'vid' : 'img', url, el};
+  });
+  $('th').innerHTML = media.map((m, i) => `<div><b>${i + 1}</b>${m.t === 'vid' ? `<video src="${m.url}#t=0.1" muted playsinline></video>` : `<img src="${m.url}">`}</div>`).join('');
+};
+
+/* ---------- IA do roteiro (Gemini, Groq ou OpenAI) ---------- */
+async function ai(prompt, key) {
+  const gem = key.startsWith('AIza'), grq = key.startsWith('gsk_');
+  let models = ['gpt-4o-mini'];
+  if (gem) models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite'];
+  if (grq) {
+    models = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'];
+    try {
+      const r = await fetch('https://api.groq.com/openai/v1/models', {headers: {Authorization: 'Bearer ' + key}});
+      const ids = ((await r.json()).data || []).map(m => m.id).filter(i => !/whisper|guard|tts|playai|orpheus|embed|distil/i.test(i));
+      models = [...models.filter(m => ids.includes(m)), ...ids.filter(i => !models.includes(i))];
+    } catch (e) {}
+  }
+  const errs = [];
+  for (const model of models.slice(0, 4)) {
+    try {
+      let txt, r, j;
+      if (gem) {
+        r = await fetch(GEM + model + ':generateContent', {method: 'POST', headers: {'Content-Type': 'application/json', 'x-goog-api-key': key},
+          body: JSON.stringify({contents: [{parts: [{text: prompt}]}], generationConfig: {temperature: 0.7, responseMimeType: 'application/json'}})});
+        j = await r.json();
+        if (!r.ok) throw new Error(`[${model}] ${j.error?.message || r.status}`);
+        txt = (j.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('');
+      } else {
+        r = await fetch(grq ? GROQ : OAI, {method: 'POST', headers: {'Content-Type': 'application/json', Authorization: 'Bearer ' + key},
+          body: JSON.stringify({model, temperature: 0.7, response_format: {type: 'json_object'}, messages: [{role: 'user', content: prompt}]})});
+        j = await r.json();
+        if (!r.ok) throw new Error(`[${model}] ${j.error?.message || r.status}`);
+        txt = j.choices[0].message.content;
+      }
+      return JSON.parse(txt.replace(/```json|```/g, '').trim());
+    } catch (e) { errs.push(e.message); }
+  }
+  throw new Error(errs.join(' | ') || 'Nenhum modelo liberado nesta chave.');
+}
+
+$('gr').onclick = async () => {
+  const key = clean($('gkey').value), nome = $('nome').value.trim(), N = media.length;
+  if (!key) return alert('Cole a chave de IA do roteiro (Gemini ou Groq).');
+  if (!N) return alert('Escolha ao menos 1 foto ou vídeo.');
+  if (!nome) return alert('Informe o nome do produto.');
+  $('gr').disabled = true; $('gr').textContent = 'Escrevendo o roteiro…';
+  try {
+    const p = $('preco').value.trim(), o = $('oferta').value.trim();
+    const prompt = `Você é roteirista de vídeos curtos de venda para o Shopee Vídeo (Brasil), formato 9:16.
+Produto: ${nome}
+Detalhes reais: ${$('det').value.trim() || '(não informados; não invente nada)'}
+Preço: ${p ? 'R$ ' + p : '(não informado)'}${o ? ' | Oferta: ' + o : ''}
+Tom: ${$('tom').value}
+Crie EXATAMENTE ${N} cenas, uma para cada mídia, em ordem.
+Regras: português do Brasil correto e natural (nunca "tu/és"); frases curtas para narrar em voz alta (máx. 14 palavras por fala); não invente palavras nem especificações; sem promessas falsas ou exageros; a cena 1 abre com um gancho forte; a última convida a comprar. A legenda de cada cena tem no máximo 5 palavras.
+Responda SOMENTE JSON: {"gancho":"até 7 palavras","cenas":[{"fala":"","legenda":""}],"cta":"até 4 palavras","legenda_post":"texto curto para a descrição","hashtags":["#a","#b"]}`;
+    const r = await ai(prompt, key), c = r.cenas || [];
+    S = Array.from({length: N}, (_, i) => ({fala: String((c[i] || {}).fala || ''), legenda: String((c[i] || {}).legenda || '')}));
+    let h = r.hashtags; if (typeof h === 'string') h = h.split(/\s+/); if (!Array.isArray(h)) h = [];
+    post = {gancho: String(r.gancho || ''), cta: String(r.cta || 'COMPRE AGORA')};
+    $('hk').value = post.gancho; $('ct').value = post.cta; $('post').value = `${r.legenda_post || ''}\n\n${h.join(' ')}`.trim();
+    $('scs').innerHTML = S.map((s, i) => `<div class="sc"><label>Cena ${i + 1} · fala</label><input class="inp" data-i="${i}" data-k="fala" value="${esc(s.fala)}"><label>Legenda na tela</label><input class="inp" data-i="${i}" data-k="legenda" value="${esc(s.legenda)}"></div>`).join('');
+    $('ed').classList.remove('hidden'); $('vm').classList.remove('hidden');
+    $('ed').scrollIntoView({behavior: 'smooth'});
+  } catch (e) { alert('Erro no roteiro: ' + e.message); }
+  $('gr').disabled = false; $('gr').textContent = '✨ Gerar roteiro com IA';
+};
+$('scs').oninput = e => { const t = e.target; if (t.dataset.i) S[t.dataset.i][t.dataset.k] = t.value; };
+$('hk').oninput = () => post.gancho = $('hk').value;
+$('ct').oninput = () => post.cta = $('ct').value;
+$('cp').onclick = async () => { try { await navigator.clipboard.writeText($('post').value); $('cp').textContent = '✅ Copiado'; } catch (e) { $('cp').textContent = 'Não foi possível copiar'; } };
+
+/* ---------- Voz (Gemini grátis ou OpenAI) ---------- */
+async function ttsGemini(text, key, voice) {
+  let last = '';
+  for (let tent = 0; tent < 6; tent++) {
+    const r = await fetch(GEM + 'gemini-2.5-flash-preview-tts:generateContent', {method: 'POST', headers: {'Content-Type': 'application/json', 'x-goog-api-key': key},
+      body: JSON.stringify({contents: [{parts: [{text: 'Diga em português do Brasil, com energia e naturalidade de vendedor, ritmo ágil: ' + text}]},],
+        generationConfig: {responseModalities: ['AUDIO'], speechConfig: {voiceConfig: {prebuiltVoiceConfig: {voiceName: voice}}}}})});
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 429) { for (let s = 20; s > 0; s--) { setSt(`⏳ Limite grátis da voz atingido. Aguardando ${s}s e tentando de novo…`); await sleep(1000); } continue; }
+    if (!r.ok) throw new Error('[voz Gemini] ' + (j.error?.message || r.status));
+    const b64 = j.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    if (!b64) { last = 'resposta sem áudio'; await sleep(1500); continue; }
+    const bin = atob(b64), n = bin.length >> 1, buf = AC.createBuffer(1, n, 24000), d = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) { let v = (bin.charCodeAt(2 * i + 1) << 8) | bin.charCodeAt(2 * i); if (v >= 32768) v -= 65536; d[i] = v / 32768; }
+    return buf;
+  }
+  throw new Error('[voz Gemini] ' + (last || 'limite de uso excedido, tente novamente em 1 minuto.'));
+}
+async function ttsOpenAI(text, key, voice) {
+  const map = {Kore: 'nova', Aoede: 'shimmer', Puck: 'alloy', Charon: 'onyx', Fenrir: 'echo'};
+  let last = '';
+  for (const model of ['gpt-4o-mini-tts', 'tts-1']) {
+    const body = {model, voice: map[voice] || 'nova', input: text, response_format: 'mp3'};
+    if (model !== 'tts-1') body.instructions = 'Fale em português do Brasil, com energia e naturalidade de vendedor, ritmo ágil.';
+    const r = await fetch('https://api.openai.com/v1/audio/speech', {method: 'POST', headers: {'Content-Type': 'application/json', Authorization: 'Bearer ' + key}, body: JSON.stringify(body)});
+    if (r.ok) return AC.decodeAudioData(await r.arrayBuffer());
+    const j = await r.json().catch(() => ({})); last = j.error?.message || r.status;
+  }
+  throw new Error('[voz OpenAI] ' + last);
+}
+const tts = (text, key, voice) => key.startsWith('AIza') ? ttsGemini(text, key, voice) : ttsOpenAI(text, key, voice);
+
+/* ---------- Música criada no app ---------- */
+async function music(style, dur) {
+  const sr = 44100, oc = new OfflineAudioContext(2, Math.ceil(sr * dur), sr);
+  const [bpm, prog, drums, third] = {animada: [112, [0, 5, 7, 5], 1, 1.26], intensa: [126, [0, -4, -2, -5], 1, 1.19], calma: [80, [0, -3, 5, 7], 0, 1.26]}[style];
+  const beat = 60 / bpm, out = oc.createGain(); out.gain.value = 0.5; out.connect(oc.destination);
+  const note = (f, t, d, type, v) => { const o = oc.createOscillator(), e = oc.createGain(); o.type = type; o.frequency.value = f;
+    e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(v, t + 0.02); e.gain.exponentialRampToValueAtTime(0.001, t + d);
+    o.connect(e); e.connect(out); o.start(t); o.stop(t + d + 0.05); };
+  const nb = oc.createBuffer(1, sr * 0.1, sr), nd = nb.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+  for (let b = 0, t = 0; t < dur; b++, t = b * beat) {
+    const root = 220 * Math.pow(2, prog[Math.floor(b / 4) % 4] / 12);
+    if (b % 4 === 0) [1, third, 1.5].forEach(m => note(root * m, t, beat * 4, 'triangle', 0.07));
+    note(root / 2, t, beat * 0.9, 'sawtooth', 0.09);
+    if (drums) {
+      const o = oc.createOscillator(), e = oc.createGain(); o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.12);
+      e.gain.setValueAtTime(0.6, t); e.gain.exponentialRampToValueAtTime(0.001, t + 0.15); o.connect(e); e.connect(out); o.start(t); o.stop(t + 0.2);
+      const s = oc.createBufferSource(), hg = oc.createGain(), hp = oc.createBiquadFilter(); s.buffer = nb; hp.type = 'highpass'; hp.frequency.value = 7000;
+      hg.gain.value = 0.12; s.connect(hp); hp.connect(hg); hg.connect(out); s.start(t + beat / 2);
+    }
+  }
+  return oc.startRendering();
+}
+
+/* ---------- Desenho ---------- */
+function wrap(g, txt, max) { const o = []; let l = ''; for (const x of txt.split(' ')) { const t = l ? l + ' ' + x : x; if (g.measureText(t).width > max && l) { o.push(l); l = x; } else l = t; } o.push(l); return o; }
+function rr(g, x, y, w, h, r) { g.beginPath(); g.roundRect ? g.roundRect(x, y, w, h, r) : g.rect(x, y, w, h); g.fill(); }
+const FONT = 'system-ui,Arial,sans-serif';
+function badge(g) {
+  if (!F.preco) return;
+  g.save(); g.textAlign = 'left'; g.textBaseline = 'top';
+  const p = 'R$ ' + F.preco, a = F.antigo ? 'de R$ ' + F.antigo : '', o = (F.oferta || '').toUpperCase();
+  g.font = `900 60px ${FONT}`; let w = g.measureText(p).width + 48;
+  g.font = `700 26px ${FONT}`; w = Math.max(w, a ? g.measureText(a).width + 48 : 0);
+  g.font = `800 26px ${FONT}`; w = Math.max(w, o ? g.measureText(o).width + 48 : 0);
+  const x = 28, y = 250, h = 28 + (a ? 34 : 0) + 70 + (o ? 36 : 0); let yy = y + 14;
+  g.fillStyle = '#ee4d2d'; rr(g, x, y, w, h, 22);
+  if (a) { g.font = `700 26px ${FONT}`; g.fillStyle = '#ffe1d8'; g.fillText(a, x + 24, yy); g.fillRect(x + 24, yy + 14, g.measureText(a).width, 3); yy += 34; }
+  g.font = `900 60px ${FONT}`; g.fillStyle = '#fff'; g.fillText(p, x + 24, yy); yy += 70;
+  if (o) { g.font = `800 26px ${FONT}`; g.fillStyle = '#ffe14d'; g.fillText(o, x + 24, yy); }
+  g.restore();
+}
+function overlay(g, T, i, total) {
+  g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
+  if (T < 3 && post.gancho) {
+    g.font = `900 46px ${FONT}`; const ls = wrap(g, post.gancho.toUpperCase(), 600);
+    g.fillStyle = '#ee4d2d'; rr(g, 40, 110, 640, ls.length * 56 + 30, 22);
+    g.fillStyle = '#fff'; ls.forEach((l, j) => g.fillText(l, 360, 153 + j * 56));
+  }
+  if (T >= 3) badge(g);
+  const c = S[i].legenda;
+  if (c) {
+    g.font = `900 54px ${FONT}`; g.lineWidth = 14; g.strokeStyle = '#000'; g.fillStyle = '#fff';
+    wrap(g, c.toUpperCase(), 640).forEach((l, j, a) => { const y = 930 + (j - (a.length - 1) / 2) * 62; g.strokeText(l, 360, y); g.fillText(l, 360, y); });
+  }
+  if (post.cta && T >= total - 2.5) {
+    g.font = `900 38px ${FONT}`; const t = post.cta.toUpperCase(), w = g.measureText(t).width + 60;
+    g.fillStyle = '#ee4d2d'; rr(g, (720 - w) / 2, 1060, w, 84, 42); g.fillStyle = '#fff'; g.fillText(t, 360, 1102);
+  }
+}
+
+/* ---------- Gerar vídeo ---------- */
+$('mk').onclick = async () => {
+  if (!S.length || !media.length) return setSt('❌ Gere o roteiro primeiro.');
+  const gk = clean($('gkey').value), vm = $('vz').value;
+  const vkey = clean($('okey').value) || (/^(AIza|sk-)/.test(gk) ? gk : '');
+  F = {preco: $('preco').value.trim(), antigo: $('antigo').value.trim(), oferta: $('oferta').value.trim()};
+  if (!window.MediaRecorder) return setSt('❌ Use o Chrome para gravar o vídeo.');
+  $('mk').disabled = true; $('res').classList.add('hidden');
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)(); await AC.resume();
+    const N = S.length; let bufs = [], nar = null;
+    if (vm === 'ia') {
+      if (!vkey) throw new Error('Para a voz de IA, cole uma chave Gemini grátis (AIza…) no campo da voz, ou escolha "Minha narração" ou "Sem voz".');
+      for (let i = 0; i < N; i++) { setSt(`🎙️ Gerando a voz ${i + 1}/${N}…`); bufs[i] = S[i].fala.trim() ? await ttsCached(S[i].fala, vkey, $('vc').value) : null; }
+    }
+    if (vm === 'arq') {
+      const f = $('nar').files[0]; if (!f) throw new Error('Escolha o arquivo da sua narração.');
+      nar = await AC.decodeAudioData(await f.arrayBuffer());
+    }
+    let durs;
+    if (nar) { const tot = Math.max(nar.duration + 0.6, N * 3); durs = S.map(() => tot / N); }
+    else durs = S.map((_, i) => bufs[i] ? Math.max(2.8, bufs[i].duration + 0.35) : 3.5);
+    const st = []; durs.reduce((a, d, i) => (st[i] = a, a + d), 0); const total = durs.reduce((a, b) => a + b, 0);
+    setSt('🎵 Criando a música…');
+    let mus = null, mfile = null;
+    if ($('mu').value === 'arq') {
+      const f = $('muf').files[0]; if (!f) throw new Error('Escolha o arquivo da música ou mude para outra opção.');
+      mfile = await AC.decodeAudioData(await f.arrayBuffer());
+    } else if ($('mu').value !== 'nenhuma') mus = await music($('mu').value, total + 1);
+    setSt('🖼️ Preparando as mídias…');
+    await Promise.all(media.map(m => m.t === 'img' ? m.el.decode().catch(() => {}) : new Promise(r => { m.el.readyState >= 2 ? r() : m.el.onloadeddata = r; setTimeout(r, 5000); })));
+    media.forEach(m => { if (m.t === 'img' && !m.bg && m.el.naturalWidth) {
+      const c = document.createElement('canvas'); c.width = 36; c.height = 64; const x = c.getContext('2d'), w = m.el.naturalWidth, h = m.el.naturalHeight, s = Math.max(36 / w, 64 / h);
+      x.drawImage(m.el, (36 - w * s) / 2, (64 - h * s) / 2, w * s, h * s); m.bg = c; } });
+
+    const dest = AC.createMediaStreamDestination(), T0 = AC.currentTime + 0.5;
+    const play = (buf, t, vol) => { const s = AC.createBufferSource(), g = AC.createGain(); s.buffer = buf; g.gain.value = vol; s.connect(g); g.connect(dest); s.start(Math.max(AC.currentTime, t)); };
+    const hasVoice = vm !== 'sem';
+    if (mus) play(mus, T0, hasVoice ? 0.28 : 0.85);
+    if (mfile) {
+      const s = AC.createBufferSource(), gn = AC.createGain(), v = hasVoice ? 0.28 : 0.85;
+      s.buffer = mfile; s.loop = true;
+      const off = Math.min(Math.max(0, +$('mst').value || 0), Math.max(0, mfile.duration - 1));
+      gn.gain.setValueAtTime(v, T0); gn.gain.setValueAtTime(v, T0 + Math.max(0, total - 1.5)); gn.gain.linearRampToValueAtTime(0, T0 + total + 0.2);
+      s.connect(gn); gn.connect(dest); s.start(T0, off); s.stop(T0 + total + 0.3);
+    }
+    if (nar) play(nar, T0, 1);
+    bufs.forEach((b, i) => b && play(b, T0 + st[i] + 0.1, 1));
+
+    const cv = document.createElement('canvas'); cv.width = 720; cv.height = 1280; const g = cv.getContext('2d');
+    const stream = cv.captureStream(30); dest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
+    const mime = ['video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4'].find(m => MediaRecorder.isTypeSupported(m)) || '', ext = mime.includes('mp4') ? 'mp4' : 'webm';
+    const rec = new MediaRecorder(stream, mime ? {mimeType: mime, videoBitsPerSecond: 3000000} : {});
+    const chunks = []; rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+    const done = new Promise(r => rec.onstop = r);
+    let cur = -1;
+    const frame = T => {
+      let i = st.findIndex((s, k) => T >= s && T < s + durs[k]); if (i < 0) i = T < 0 ? 0 : N - 1;
+      const m = media[i % media.length], t = Math.min(1, Math.max(0, T - st[i]) / durs[i]);
+      if (i !== cur) { media.forEach(x => x.t === 'vid' && x.el.pause()); if (m.t === 'vid') { m.el.currentTime = 0; m.el.play().catch(() => {}); } cur = i; }
+      g.fillStyle = '#000'; g.fillRect(0, 0, 720, 1280);
+      if (m.t === 'vid') { const w = m.el.videoWidth, h = m.el.videoHeight; if (w) { const s = Math.max(720 / w, 1280 / h) * (1 + 0.06 * t); g.drawImage(m.el, (720 - w * s) / 2, (1280 - h * s) / 2, w * s, h * s); } }
+      else if (m.bg) {
+        g.drawImage(m.bg, 0, 0, 720, 1280); g.fillStyle = 'rgba(0,0,0,.3)'; g.fillRect(0, 0, 720, 1280);
+        const w = m.el.naturalWidth, h = m.el.naturalHeight, s = Math.min(680 / w, 900 / h) * (1 + 0.12 * (i % 2 ? 1 - t : t));
+        g.drawImage(m.el, (720 - w * s) / 2, 560 - h * s / 2, w * s, h * s);
+      }
+      overlay(g, T, i, total);
+    };
+    frame(0); rec.start();
+    await new Promise(fin => { const tick = () => { const T = AC.currentTime - T0; if (T >= total + 0.3) return fin(); frame(T); setSt(`🎬 Gravando… ${Math.round(Math.max(0, T) / total * 100)}%`); requestAnimationFrame(tick); }; tick(); });
+    media.forEach(x => x.t === 'vid' && x.el.pause()); rec.stop(); await done; stream.getVideoTracks().forEach(t => t.stop());
+
+    const blob = new Blob(chunks, {type: mime || 'video/webm'});
+    if (blob.size < 20000) throw new Error('A gravação saiu vazia. Tente de novo com a tela ligada.');
+    const url = URL.createObjectURL(blob); $('out').src = url; $('dl').href = url; $('dl').download = `video-shopee.${ext}`;
+    $('sh').onclick = async () => { try { const f = new File([blob], `video-shopee.${ext}`, {type: blob.type}); if (navigator.canShare && navigator.canShare({files: [f]})) await navigator.share({files: [f]}); else $('sh').textContent = 'Compartilhar indisponível aqui'; } catch (e) {} };
+    $('res').classList.remove('hidden'); $('res').scrollIntoView({behavior: 'smooth'});
+    setSt(`✅ Pronto: ${Math.round(total)}s, ${(blob.size / 1048576).toFixed(1)} MB`);
+  } catch (e) { setSt('❌ ' + e.message); }
+  $('mk').disabled = false;
+};
+
+/* Guarda as vozes já geradas: refazer o vídeo não gasta o limite grátis de novo */
+const ttsMem = {};
+async function ttsCached(text, key, voice) {
+  const k = voice + '|' + text;
+  return ttsMem[k] || (ttsMem[k] = await tts(text, key, voice));
+}
+</script>
+</body>
+</html>
