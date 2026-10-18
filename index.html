@@ -35,12 +35,12 @@ label{font-size:11px;font-weight:700;color:#ffb199;display:block;margin-bottom:4
 <body>
 <main>
 <header><h1>🛍️ Shopee <span>Vídeo Pro</span></h1>
-<p class="note">Fotos e vídeos do produto → roteiro da IA, voz, música e selo de preço, num vídeo vertical pronto. <b>(v7)</b></p></header>
+<p class="note">Fotos e vídeos do produto → roteiro da IA, voz, música e selo de preço, num vídeo vertical pronto. <b>(v8)</b></p></header>
 
 <div class="card">
   <h2>Chaves de IA (grátis)</h2>
   <input id="gkey" type="password" class="inp" placeholder="Chave do roteiro: Gemini (AIza…) ou Groq (gsk_…)">
-  <input id="okey" type="password" class="inp" placeholder="Chave da voz (opcional): Gemini (AIza…) ou OpenAI (sk-…)">
+  <input id="okey" type="password" class="inp" placeholder="Chave da voz (opcional): ElevenLabs (sk_…), Gemini ou OpenAI">
   <p class="note">✅ Mais simples: uma única chave <b>Gemini</b> grátis serve para roteiro e voz. Crie em <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>. A Groq (<a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com</a>) é grátis só para o roteiro. Sem chave de voz, use sua própria narração ou deixe sem voz.</p>
 </div>
 
@@ -243,7 +243,31 @@ async function ttsOpenAI(text, key, voice) {
   }
   throw new Error('[voz OpenAI] ' + last);
 }
-const tts = (text, key, voice) => isGem(key) ? ttsGemini(text, key, voice) : ttsOpenAI(text, key, voice);
+/* ---------- Voz ElevenLabs (chave sk_…) ---------- */
+let ELV = null;
+const errTxt = j => { const d = j && j.detail; return typeof d === 'string' ? d : (d && (d.message || d.status)) || ''; };
+async function elVoices(key) {
+  if (ELV) return ELV;
+  const r = await fetch('https://api.elevenlabs.io/v1/voices', {headers: {'xi-api-key': key}});
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error('[voz ElevenLabs] ' + (errTxt(j) || r.status));
+  return ELV = j.voices || [];
+}
+async function ttsEleven(text, key, voice) {
+  const vs = await elVoices(key), g = ['Kore', 'Aoede'].includes(voice) ? 'female' : 'male';
+  const pick = vs.filter(v => ((v.labels || {}).gender || '') === g), list = pick.length ? pick : vs;
+  if (!list.length) throw new Error('[voz ElevenLabs] nenhuma voz disponível nesta conta');
+  const v = list[({Kore: 0, Aoede: 1, Puck: 0, Charon: 1, Fenrir: 2}[voice] || 0) % list.length];
+  let last = '';
+  for (const model of ['eleven_multilingual_v2', 'eleven_flash_v2_5']) {
+    const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${v.voice_id}?output_format=mp3_44100_128`, {method: 'POST',
+      headers: {'Content-Type': 'application/json', 'xi-api-key': key}, body: JSON.stringify({text, model_id: model})});
+    if (r.ok) return AC.decodeAudioData(await r.arrayBuffer());
+    last = errTxt(await r.json().catch(() => ({}))) || r.status;
+  }
+  throw new Error('[voz ElevenLabs] ' + last);
+}
+const tts = (text, key, voice) => isGem(key) ? ttsGemini(text, key, voice) : key.startsWith('sk_') ? ttsEleven(text, key, voice) : ttsOpenAI(text, key, voice);
 
 /* ---------- Música criada no app ---------- */
 async function music(style, dur) {
