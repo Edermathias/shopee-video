@@ -35,12 +35,12 @@ label{font-size:11px;font-weight:700;color:#ffb199;display:block;margin-bottom:4
 <body>
 <main>
 <header><h1>🛍️ Shopee <span>Vídeo Pro</span></h1>
-<p class="note">Fotos e vídeos do produto → roteiro da IA, voz, música e selo de preço, num vídeo vertical pronto. <b>(v8)</b></p></header>
+<p class="note">Fotos e vídeos do produto → roteiro da IA, voz, música e selo de preço, num vídeo vertical pronto. <b>(v9)</b></p></header>
 
 <div class="card">
   <h2>Chaves de IA (grátis)</h2>
   <input id="gkey" type="password" class="inp" placeholder="Chave do roteiro: Gemini (AIza…) ou Groq (gsk_…)">
-  <input id="okey" type="password" class="inp" placeholder="Chave da voz (opcional): ElevenLabs (sk_…), Gemini ou OpenAI">
+  <input id="okey" type="password" class="inp" placeholder="Chave da voz (opcional): ElevenLabs, Gemini ou OpenAI">
   <p class="note">✅ Mais simples: uma única chave <b>Gemini</b> grátis serve para roteiro e voz. Crie em <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>. A Groq (<a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com</a>) é grátis só para o roteiro. Sem chave de voz, use sua própria narração ou deixe sem voz.</p>
 </div>
 
@@ -267,7 +267,7 @@ async function ttsEleven(text, key, voice) {
   }
   throw new Error('[voz ElevenLabs] ' + last);
 }
-const tts = (text, key, voice) => isGem(key) ? ttsGemini(text, key, voice) : key.startsWith('sk_') ? ttsEleven(text, key, voice) : ttsOpenAI(text, key, voice);
+const tts = (text, key, voice) => isGem(key) ? ttsGemini(text, key, voice) : key.startsWith('sk-') ? ttsOpenAI(text, key, voice) : ttsEleven(text, key, voice);
 
 /* ---------- Música criada no app ---------- */
 async function music(style, dur) {
