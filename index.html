@@ -115,11 +115,33 @@ $('files').onchange = e => {
   $('th').innerHTML = media.map((m, i) => `<div><b>${i + 1}</b>${m.t === 'vid' ? `<video src="${m.url}#t=0.1" muted playsinline></video>` : `<img src="${m.url}">`}</div>`).join('');
 };
 
+/* Descobre sozinho os modelos Gemini disponíveis na sua chave (nomes mudam com o tempo) */
+let GM = null;
+async function gemAll(key) {
+  if (GM) return GM;
+  try {
+    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', {headers: {'x-goog-api-key': key}});
+    GM = ((await r.json()).models || []).filter(m => (m.supportedGenerationMethods || []).includes('generateContent')).map(m => m.name.replace('models/', ''));
+  } catch (e) { GM = []; }
+  return GM;
+}
+const ver = n => parseFloat((n.match(/gemini-([\d.]+)/) || [0, 0])[1]);
+async function gemText(key) {
+  const all = await gemAll(key);
+  const ok = all.filter(n => /^gemini-[\d.]+-flash(-lite)?(-preview[\w.-]*)?$/.test(n) && !/tts|image|live|audio|native|exp/.test(n));
+  ok.sort((a, b) => ver(b) - ver(a) || /preview/.test(a) - /preview/.test(b) || /lite/.test(a) - /lite/.test(b));
+  return [...new Set([...ok, 'gemini-3.8-flash', 'gemini-3.5-flash-lite'])].slice(0, 5);
+}
+async function gemTts(key) {
+  const all = (await gemAll(key)).filter(n => /tts/.test(n)).sort().reverse();
+  return [...new Set([...all, 'gemini-2.5-flash-preview-tts'])].slice(0, 3);
+}
+
 /* ---------- IA do roteiro (Gemini, Groq ou OpenAI) ---------- */
 async function ai(prompt, key) {
   const gem = isGem(key), grq = key.startsWith('gsk_');
   let models = ['gpt-4o-mini'];
-  if (gem) models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash-lite'];
+  if (gem) models = await gemText(key);
   if (grq) {
     models = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'];
     try {
@@ -129,7 +151,7 @@ async function ai(prompt, key) {
     } catch (e) {}
   }
   const errs = [];
-  for (const model of models.slice(0, 4)) {
+  for (const model of models.slice(0, 5)) {
     try {
       let txt, r, j;
       if (gem) {
@@ -186,18 +208,20 @@ $('cp').onclick = async () => { try { await navigator.clipboard.writeText($('pos
 /* ---------- Voz (Gemini grátis ou OpenAI) ---------- */
 async function ttsGemini(text, key, voice) {
   let last = '';
-  for (let tent = 0; tent < 6; tent++) {
-    const r = await fetch(GEM + 'gemini-2.5-flash-preview-tts:generateContent', {method: 'POST', headers: {'Content-Type': 'application/json', 'x-goog-api-key': key},
-      body: JSON.stringify({contents: [{parts: [{text: 'Diga em português do Brasil, com energia e naturalidade de vendedor, ritmo ágil: ' + text}]},],
-        generationConfig: {responseModalities: ['AUDIO'], speechConfig: {voiceConfig: {prebuiltVoiceConfig: {voiceName: voice}}}}})});
-    const j = await r.json().catch(() => ({}));
-    if (r.status === 429) { for (let s = 20; s > 0; s--) { setSt(`⏳ Limite grátis da voz atingido. Aguardando ${s}s e tentando de novo…`); await sleep(1000); } continue; }
-    if (!r.ok) throw new Error('[voz Gemini] ' + (j.error?.message || r.status));
-    const b64 = j.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-    if (!b64) { last = 'resposta sem áudio'; await sleep(1500); continue; }
-    const bin = atob(b64), n = bin.length >> 1, buf = AC.createBuffer(1, n, 24000), d = buf.getChannelData(0);
-    for (let i = 0; i < n; i++) { let v = (bin.charCodeAt(2 * i + 1) << 8) | bin.charCodeAt(2 * i); if (v >= 32768) v -= 65536; d[i] = v / 32768; }
-    return buf;
+  for (const model of await gemTts(key)) {
+    for (let tent = 0; tent < 4; tent++) {
+      const r = await fetch(GEM + model + ':generateContent', {method: 'POST', headers: {'Content-Type': 'application/json', 'x-goog-api-key': key},
+        body: JSON.stringify({contents: [{parts: [{text: 'Diga em português do Brasil, com energia e naturalidade de vendedor, ritmo ágil: ' + text}]}],
+          generationConfig: {responseModalities: ['AUDIO'], speechConfig: {voiceConfig: {prebuiltVoiceConfig: {voiceName: voice}}}}})});
+      const j = await r.json().catch(() => ({}));
+      if (r.status === 429) { for (let s = 20; s > 0; s--) { setSt(`⏳ Limite grátis da voz atingido. Aguardando ${s}s e tentando de novo…`); await sleep(1000); } continue; }
+      if (!r.ok) { last = `[${model}] ${j.error?.message || r.status}`; break; }
+      const b64 = j.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      if (!b64) { last = `[${model}] resposta sem áudio`; await sleep(1500); continue; }
+      const bin = atob(b64), n = bin.length >> 1, buf = AC.createBuffer(1, n, 24000), d = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) { let v = (bin.charCodeAt(2 * i + 1) << 8) | bin.charCodeAt(2 * i); if (v >= 32768) v -= 65536; d[i] = v / 32768; }
+      return buf;
+    }
   }
   throw new Error('[voz Gemini] ' + (last || 'limite de uso excedido, tente novamente em 1 minuto.'));
 }
