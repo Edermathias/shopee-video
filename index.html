@@ -32,7 +32,7 @@ label{font-size:11px;font-weight:700;color:#ffb199;display:block;margin-bottom:4
 <body>
 <main>
 <header><h1>🛍️ Shopee <span>Vídeo Pro</span></h1>
-<p class="note">Fotos e vídeos do produto → roteiro da IA, voz, música e selo de preço, num vídeo vertical pronto.</p></header>
+<p class="note">Fotos e vídeos do produto → roteiro da IA, voz, música e selo de preço, num vídeo vertical pronto. <b>(v6)</b></p></header>
 
 <div class="card">
   <h2>Chaves de IA (grátis)</h2>
@@ -220,6 +220,8 @@ async function ttsGemini(text, key, voice) {
       if (!b64) { last = `[${model}] resposta sem áudio`; await sleep(1500); continue; }
       const bin = atob(b64), n = bin.length >> 1, buf = AC.createBuffer(1, n, 24000), d = buf.getChannelData(0);
       for (let i = 0; i < n; i++) { let v = (bin.charCodeAt(2 * i + 1) << 8) | bin.charCodeAt(2 * i); if (v >= 32768) v -= 65536; d[i] = v / 32768; }
+      const nw = text.trim().split(/\s+/).length;
+      if (buf.duration > nw * 0.6 + 3 && tent < 2) { last = `[${model}] áudio longo demais`; continue; }
       return buf;
     }
   }
