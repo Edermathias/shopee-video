@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Shopee Vídeo Pro</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<meta name="theme-color" content="#120d0b">
 <style>
 :root{color-scheme:dark}
 *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -32,7 +35,7 @@ label{font-size:11px;font-weight:700;color:#ffb199;display:block;margin-bottom:4
 <body>
 <main>
 <header><h1>🛍️ Shopee <span>Vídeo Pro</span></h1>
-<p class="note">Fotos e vídeos do produto → roteiro da IA, voz, música e selo de preço, num vídeo vertical pronto. <b>(v6)</b></p></header>
+<p class="note">Fotos e vídeos do produto → roteiro da IA, voz, música e selo de preço, num vídeo vertical pronto. <b>(v7)</b></p></header>
 
 <div class="card">
   <h2>Chaves de IA (grátis)</h2>
@@ -88,6 +91,7 @@ label{font-size:11px;font-weight:700;color:#ffb199;display:block;margin-bottom:4
 
 <script>
 const $ = id => document.getElementById(id);
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 const GROQ = 'https://api.groq.com/openai/v1/chat/completions', OAI = 'https://api.openai.com/v1/chat/completions';
 const GEM = 'https://generativelanguage.googleapis.com/v1beta/models/';
 let media = [], S = [], post = {gancho: '', cta: '', texto: ''}, F = {}, AC = null;
